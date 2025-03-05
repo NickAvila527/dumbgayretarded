@@ -1,11 +1,16 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { MapPin, Loader2, Filter } from 'lucide-react';
+import { MapPin, Loader2, Filter, X, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedTransition from './AnimatedTransition';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import UserProfile from './UserProfile';
+import { useUser } from '@/contexts/UserContext';
+import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { UserProfile as UserProfileType } from '@/types/user';
+import { getMeetupsByLocation, getMeetupsByHobbies } from '@/services/meetupService';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Mock data for users with hobbies
 const MOCK_USERS = [
@@ -61,10 +66,13 @@ interface MapViewProps {
 }
 
 const MapView: React.FC<MapViewProps> = ({ className }) => {
+  const { currentUser, toggleActiveStatus } = useUser();
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<typeof MOCK_USERS[0] | null>(null);
   const [filteredHobbies, setFilteredHobbies] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<'people' | 'events'>('people');
+  const [meetups, setMeetups] = useState([]);
   
   // Simulate map loading
   useEffect(() => {
@@ -74,6 +82,25 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Load meetups when map is ready
+  useEffect(() => {
+    if (!isLoading) {
+      const fetchMeetups = async () => {
+        try {
+          const data = await getMeetupsByLocation(
+            currentUser.location.lat,
+            currentUser.location.lng
+          );
+          setMeetups(data);
+        } catch (error) {
+          console.error('Error fetching meetups:', error);
+        }
+      };
+      
+      fetchMeetups();
+    }
+  }, [isLoading, currentUser.location]);
   
   // Filter users based on selected hobbies
   const filteredUsers = MOCK_USERS.filter(user => {
@@ -94,7 +121,7 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
       setFilteredHobbies([...filteredHobbies, hobby]);
     }
   };
-  
+
   return (
     <div className={cn("relative w-full h-[calc(100vh-5rem)] rounded-2xl overflow-hidden", className)}>
       {isLoading ? (
@@ -113,8 +140,36 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
           {/* Map overlay with glass effect */}
           <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none" />
           
-          {/* User markers */}
-          {filteredUsers.map((user, index) => (
+          {/* View toggle control */}
+          <div className="absolute top-4 left-4 z-20">
+            <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'people' | 'events')} className="glass backdrop-blur-md rounded-full p-1">
+              <TabsList className="grid grid-cols-2 w-48">
+                <TabsTrigger value="people">
+                  <Users className="h-4 w-4 mr-2" />
+                  People
+                </TabsTrigger>
+                <TabsTrigger value="events">
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Events
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
+          {/* Active toggle switch */}
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-20 glass backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-3">
+            <span className="text-sm">Show me on map</span>
+            <Switch 
+              checked={currentUser.active} 
+              onCheckedChange={toggleActiveStatus} 
+            />
+            <Badge variant={currentUser.active ? "default" : "outline"} className="text-xs rounded-full">
+              {currentUser.active ? "Active" : "Hidden"}
+            </Badge>
+          </div>
+          
+          {/* User markers - only show when in people view mode */}
+          {viewMode === 'people' && filteredUsers.map((user, index) => (
             <AnimatedTransition 
               key={user.id}
               delay={index * 100}
@@ -145,6 +200,40 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
                 </span>
                 <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 glass px-2 py-1 rounded-md text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
                   {user.name}
+                </span>
+              </button>
+            </AnimatedTransition>
+          ))}
+
+          {/* Meetup markers - only show when in events view mode */}
+          {viewMode === 'events' && meetups.map((meetup, index) => (
+            <AnimatedTransition 
+              key={meetup.id}
+              delay={index * 100}
+              animationType="scale"
+              className="absolute"
+              style={{
+                left: `calc(50% + ${(meetup.location.lng + 74.006) * 1000}px)`,
+                top: `calc(50% - ${(meetup.location.lat - 40.7128) * 1000}px)`,
+                transform: 'translate(-50%, -50%)'
+              }}
+            >
+              <button
+                className="group relative"
+                onClick={() => console.log('Meetup clicked:', meetup)}
+              >
+                <div className={cn(
+                  "w-12 h-12 rounded-full bg-primary/80 text-white flex items-center justify-center shadow-md transition-all transform group-hover:scale-110",
+                  meetup.isRealTime ? "ring-2 ring-accent ring-offset-2 animate-pulse" : ""
+                )}>
+                  <MapPin className="h-6 w-6" />
+                </div>
+                <span className="absolute -bottom-1 right-0 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+                  <Users className="w-3 h-3" />
+                  {meetup.attendees.length}
+                </span>
+                <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 glass px-2 py-1 rounded-md text-xs font-medium opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {meetup.title}
                 </span>
               </button>
             </AnimatedTransition>

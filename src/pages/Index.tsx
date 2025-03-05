@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Crown, Filter, Heart, MapPin } from 'lucide-react';
+import { Crown, Filter, Heart, MapPin, X } from 'lucide-react';
 import AnimatedTransition from '@/components/AnimatedTransition';
 import HobbyFilter from '@/components/HobbyFilter';
 import MapView from '@/components/MapView';

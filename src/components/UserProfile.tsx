@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { X, MapPin, Calendar, MessageCircle, Heart, Crown } from 'lucide-react';
+import { X, MapPin, Calendar, MessageCircle, Heart, Crown, Users, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -15,6 +15,8 @@ interface User {
   hobbies: string[];
   active: boolean;
   premium: boolean;
+  bio?: string;
+  privacy?: 'public' | 'hobby-only' | 'anonymous';
 }
 
 interface UserProfileProps {
@@ -70,16 +72,36 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
           <MapPin className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm text-muted-foreground">New York, NY</span>
         </div>
-        <div className="flex items-center justify-center mt-1">
+        <div className="flex justify-center items-center gap-2 mt-1">
           <span className="flex items-center text-xs px-2 py-0.5 bg-primary/10 text-primary rounded-full">
             <div className="h-1.5 w-1.5 bg-green-500 rounded-full mr-1.5"></div>
             Active now
           </span>
+          
+          {user.privacy && (
+            <span className="flex items-center text-xs px-2 py-0.5 bg-secondary/10 text-secondary-foreground rounded-full">
+              <Shield className="h-3 w-3 mr-1" />
+              {user.privacy === 'public' 
+                ? 'Public profile' 
+                : user.privacy === 'hobby-only' 
+                  ? 'Visible to hobby matches'
+                  : 'Anonymous'}
+            </span>
+          )}
         </div>
       </CardHeader>
       
       <CardContent className="pb-6">
         <div className="space-y-6">
+          {user.bio && (
+            <div>
+              <h4 className="text-sm font-medium mb-2.5">About</h4>
+              <p className="text-sm text-muted-foreground">
+                {user.bio || "Passionate about my hobbies and interested in meeting like-minded people. Always up for sharing knowledge and having great conversations!"}
+              </p>
+            </div>
+          )}
+          
           <div>
             <h4 className="text-sm font-medium mb-2.5">Hobbies</h4>
             <div className="flex flex-wrap gap-2">
@@ -94,11 +116,17 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
           </div>
           
           <div>
-            <h4 className="text-sm font-medium mb-2.5">About</h4>
-            <p className="text-sm text-muted-foreground">
-              Passionate about my hobbies and interested in meeting like-minded people. 
-              Always up for sharing knowledge and having great conversations!
-            </p>
+            <h4 className="text-sm font-medium mb-2.5">Activity</h4>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <div className="flex items-center">
+                <Users className="h-4 w-4 mr-2" />
+                <span>12 meetups joined</span>
+              </div>
+              <div className="flex items-center">
+                <Clock className="h-4 w-4 mr-2" />
+                <span>5 days ago</span>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

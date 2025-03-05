@@ -9,6 +9,7 @@ interface AnimatedTransitionProps {
   delay?: number;
   duration?: number;
   showOnce?: boolean;
+  style?: React.CSSProperties;
 }
 
 const AnimatedTransition: React.FC<AnimatedTransitionProps> = ({
@@ -18,6 +19,7 @@ const AnimatedTransition: React.FC<AnimatedTransitionProps> = ({
   delay = 0,
   duration = 300,
   showOnce = false,
+  style,
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasShown, setHasShown] = useState(false);
@@ -58,7 +60,10 @@ const AnimatedTransition: React.FC<AnimatedTransitionProps> = ({
         animationStyles[animationType],
         className
       )}
-      style={{ transitionDuration: `${duration}ms` }}
+      style={{ 
+        transitionDuration: `${duration}ms`,
+        ...style 
+      }}
     >
       {children}
     </div>
