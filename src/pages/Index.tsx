@@ -6,12 +6,14 @@ import AnimatedTransition from '@/components/AnimatedTransition';
 import MapView from '@/components/MapView';
 import Navbar from '@/components/Navbar';
 import PremiumModal from '@/components/PremiumModal';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const Index = () => {
   const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const { theme } = useTheme();
   
   return (
-    <div className="flex flex-col min-h-screen relative">
+    <div className={`flex flex-col min-h-screen relative ${theme === 'dark' ? 'bg-gray-950' : ''}`}>
       <Navbar />
       
       <main className="flex-1 pt-16">

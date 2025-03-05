@@ -1,150 +1,153 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { MapPin, User, Heart, Menu, X } from 'lucide-react';
-import AnimatedTransition from './AnimatedTransition';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Home, MapPin, User, Menu, X, LogIn, Sun, Moon, Sparkles } from 'lucide-react';
+import { useUser } from '@/contexts/UserContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
-const Navbar: React.FC = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+const Navbar = () => {
+  const location = useLocation();
+  const { currentUser, isAuthenticated, logout } = useUser();
+  const { theme, toggleTheme } = useTheme();
+  const [isOpen, setIsOpen] = useState(false);
   
-  // Function to handle scroll events
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const navItems = [
+    { path: '/', label: 'Home', icon: <Home className="h-5 w-5" /> },
+    { path: '/explore', label: 'Explore', icon: <MapPin className="h-5 w-5" /> },
+    { path: '/hobbies', label: 'Features', icon: <Sparkles className="h-5 w-5" /> },
+    { path: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
+  ];
+  
+  const isActive = (path: string) => {
+    if (path === '/' && location.pathname === '/') return true;
+    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    return false;
+  };
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+  const handleNavigation = () => {
+    setIsOpen(false);
   };
 
   return (
-    <header
-      className={cn(
-        'fixed top-0 left-0 right-0 z-50 py-4 transition-all duration-300',
-        isScrolled ? 'glass shadow-sm backdrop-blur-lg' : 'bg-transparent'
-      )}
-    >
-      <div className="container px-4 mx-auto flex items-center justify-between">
-        <Link 
-          to="/" 
-          className="flex items-center space-x-2 transition-opacity hover:opacity-80"
-        >
-          <div className="rounded-full bg-primary p-1.5">
-            <MapPin className="h-5 w-5 text-white" />
-          </div>
-          <span className="font-medium text-lg">HobbyMeet</span>
-        </Link>
-        
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <AnimatedTransition delay={100} animationType="slide-down">
-            <Link
-              to="/explore"
-              className="text-foreground/70 hover:text-foreground transition-colors"
-            >
-              Explore
-            </Link>
-          </AnimatedTransition>
-          
-          <AnimatedTransition delay={200} animationType="slide-down">
-            <Link
-              to="/hobbies"
-              className="text-foreground/70 hover:text-foreground transition-colors"
-            >
-              Hobbies
-            </Link>
-          </AnimatedTransition>
-          
-          <AnimatedTransition delay={300} animationType="slide-down">
-            <Link
-              to="/premium"
-              className="text-foreground/70 hover:text-foreground transition-colors"
-            >
-              Premium
-            </Link>
-          </AnimatedTransition>
-        </nav>
-        
-        {/* User Actions */}
-        <div className="hidden md:flex items-center space-x-4">
-          <AnimatedTransition delay={400} animationType="scale">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <Heart className="h-5 w-5" />
-            </Button>
-          </AnimatedTransition>
-          
-          <AnimatedTransition delay={500} animationType="scale">
-            <Avatar className="h-9 w-9 transition-transform hover:scale-105">
-              <AvatarImage src="" alt="Profile" />
-              <AvatarFallback>
-                <User className="h-5 w-5" />
-              </AvatarFallback>
-            </Avatar>
-          </AnimatedTransition>
-        </div>
-        
-        {/* Mobile Menu Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="md:hidden rounded-full"
-          onClick={toggleMobileMenu}
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
-      
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 right-0 glass p-4 border-t border-border shadow-md animate-fade-in">
-          <nav className="flex flex-col space-y-4 py-2">
-            <Link
-              to="/explore"
-              className="text-foreground/70 hover:text-foreground transition-colors px-4 py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Explore
-            </Link>
-            <Link
-              to="/hobbies"
-              className="text-foreground/70 hover:text-foreground transition-colors px-4 py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Hobbies
-            </Link>
-            <Link
-              to="/premium"
-              className="text-foreground/70 hover:text-foreground transition-colors px-4 py-2"
-              onClick={() => setIsMobileMenuOpen(false)}
-            >
-              Premium
-            </Link>
-            <div className="border-t border-border my-2"></div>
-            <div className="flex items-center justify-between px-4 py-2">
-              <span className="text-sm text-muted-foreground">Profile</span>
-              <Avatar className="h-8 w-8">
-                <AvatarImage src="" alt="Profile" />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
-                </AvatarFallback>
-              </Avatar>
+    <>
+      {/* Mobile menu */}
+      <Sheet open={isOpen} onOpenChange={setIsOpen}>
+        <SheetTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon"
+            className="fixed z-50 top-4 right-4 md:hidden h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm shadow-md"
+          >
+            {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="right" className="px-0 pt-12">
+          <div className="flex flex-col h-full">
+            <div className="px-6 flex items-center justify-between">
+              {isAuthenticated ? (
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                    <AvatarFallback>{currentUser.name[0]}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-sm">{currentUser.name}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {currentUser.role === 'premium' ? 'Premium' : 'Free Account'}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Button variant="outline" className="gap-2">
+                  <LogIn className="h-4 w-4" />
+                  Sign In
+                </Button>
+              )}
+              
+              <Button variant="ghost" size="icon" onClick={toggleTheme}>
+                {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
             </div>
-          </nav>
+            
+            <div className="mt-8 flex flex-col gap-2 px-4">
+              {navItems.map((item) => (
+                <Link 
+                  key={item.path} 
+                  to={item.path} 
+                  onClick={handleNavigation}
+                >
+                  <Button 
+                    variant={isActive(item.path) ? "default" : "ghost"} 
+                    className="w-full justify-start text-lg h-12"
+                  >
+                    {item.icon}
+                    <span className="ml-3">{item.label}</span>
+                  </Button>
+                </Link>
+              ))}
+            </div>
+            
+            {isAuthenticated && (
+              <div className="mt-auto px-4 pb-6">
+                <Button 
+                  variant="outline" 
+                  className="w-full"
+                  onClick={() => { logout(); handleNavigation(); }}
+                >
+                  Sign Out
+                </Button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Desktop navbar */}
+      <nav className="fixed top-0 left-0 right-0 z-40 bg-background/80 backdrop-blur-md border-b">
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <Link to="/" className="font-bold text-xl flex items-center">
+            HobbyMeet
+          </Link>
+          
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link key={item.path} to={item.path}>
+                <Button 
+                  variant={isActive(item.path) ? "default" : "ghost"} 
+                  className="gap-2"
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </Button>
+              </Link>
+            ))}
+          </div>
+          
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={toggleTheme}>
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </Button>
+            
+            {isAuthenticated ? (
+              <Link to="/profile">
+                <Avatar className="h-9 w-9 cursor-pointer">
+                  <AvatarImage src={currentUser.avatar} alt={currentUser.name} />
+                  <AvatarFallback>{currentUser.name[0]}</AvatarFallback>
+                </Avatar>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-2">
+                <LogIn className="h-4 w-4" />
+                Sign In
+              </Button>
+            )}
+          </div>
         </div>
-      )}
-    </header>
+      </nav>
+    </>
   );
 };
 

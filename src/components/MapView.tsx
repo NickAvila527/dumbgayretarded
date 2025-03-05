@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 import { useUser } from '@/contexts/UserContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { UserProfile as UserProfileType, Meetup } from '@/types/user';
 import { getMeetupsByLocation, getMeetupsByHobbies } from '@/services/meetupService';
 
@@ -67,6 +67,7 @@ interface MapViewProps {
 
 const MapView: React.FC<MapViewProps> = ({ className }) => {
   const { currentUser, toggleActiveStatus } = useUser();
+  const { theme } = useTheme();
   const mapRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<typeof MOCK_USERS[0] | null>(null);
@@ -127,8 +128,22 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
     console.log('Meetup clicked:', meetup);
   };
 
+  // Get the appropriate map style URL based on theme
+  const getMapStyleUrl = () => {
+    const baseUrl = 'https://api.mapbox.com/styles/v1/mapbox';
+    const style = theme === 'dark' ? 'dark-v11' : 'light-v11';
+    const params = '/static/-74.006,40.7128,12,0/1200x800';
+    const token = '?access_token=pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2xrNjlpZWZvMDMzbjNqbzE3OXNrOXU0OSJ9.HLO0UgQQ3M0SvRr_rxUCdQ';
+    
+    return `${baseUrl}/${style}${params}${token}`;
+  };
+
   return (
-    <div className={cn("relative w-full h-[calc(100vh-5rem)] rounded-2xl overflow-hidden", className)}>
+    <div className={cn(
+      "relative w-full h-[calc(100vh-5rem)] rounded-2xl overflow-hidden", 
+      theme === 'dark' ? 'border border-gray-800' : '', 
+      className
+    )}>
       <LoadingOverlay isLoading={isLoading} />
       
       {!isLoading && (
@@ -136,11 +151,17 @@ const MapView: React.FC<MapViewProps> = ({ className }) => {
           {/* Placeholder map background */}
           <div 
             ref={mapRef} 
-            className="absolute inset-0 bg-[url('https://api.mapbox.com/styles/v1/mapbox/light-v11/static/-74.006,40.7128,12,0/1200x800?access_token=pk.eyJ1IjoibG92YWJsZS1kZXYiLCJhIjoiY2xrNjlpZWZvMDMzbjNqbzE3OXNrOXU0OSJ9.HLO0UgQQ3M0SvRr_rxUCdQ')] bg-cover"
+            className="absolute inset-0 bg-cover"
+            style={{ backgroundImage: `url('${getMapStyleUrl()}')` }}
           />
           
           {/* Map overlay with glass effect */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/20 to-transparent pointer-events-none" />
+          <div className={cn(
+            "absolute inset-0 pointer-events-none",
+            theme === 'dark' 
+              ? 'bg-gradient-to-t from-gray-900/20 to-transparent' 
+              : 'bg-gradient-to-t from-background/20 to-transparent'
+          )} />
           
           {/* Map Controls */}
           <MapControls 
