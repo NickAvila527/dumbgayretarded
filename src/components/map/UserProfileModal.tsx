@@ -2,6 +2,8 @@
 import React from 'react';
 import AnimatedTransition from '../AnimatedTransition';
 import UserProfile from '../UserProfile';
+import { X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface User {
   id: number;
@@ -25,15 +27,27 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ selectedUser, onClo
   
   return (
     <div 
-      className="absolute inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-6 z-50"
+      className="absolute inset-0 bg-black/10 flex items-center justify-center p-6 z-50"
       onClick={onClose}
     >
       <div 
-        className="relative w-full max-w-md"
+        className="absolute bottom-0 left-0 right-0 md:relative md:bottom-auto w-full max-w-md"
         onClick={e => e.stopPropagation()}
       >
-        <AnimatedTransition animationType="scale">
-          <UserProfile user={selectedUser} onClose={onClose} />
+        <AnimatedTransition animationType="slide-up">
+          <div className="bg-white rounded-t-xl md:rounded-xl shadow-xl overflow-hidden">
+            <div className="relative">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-3 left-3 z-10 rounded-full bg-white/80 h-8 w-8 backdrop-blur-sm"
+                onClick={onClose}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <UserProfile user={selectedUser} onClose={onClose} />
+            </div>
+          </div>
         </AnimatedTransition>
       </div>
     </div>
