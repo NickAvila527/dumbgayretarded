@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { X, MapPin, Calendar, MessageCircle, Heart, Crown, Users, Shield, Clock } from 'lucide-react';
@@ -41,7 +42,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
           theme === 'dark' 
             ? 'bg-gradient-to-r from-primary/50 to-purple-700/50' 
             : 'bg-gradient-to-r from-primary/80 to-accent/80'
-        }`}</div>
+        }`}></div>
         
         {/* Close button */}
         <Button 
