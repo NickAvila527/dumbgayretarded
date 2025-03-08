@@ -15,14 +15,28 @@ interface User {
   premium: boolean;
   bio?: string;
   privacy?: 'public' | 'hobby-only' | 'anonymous';
+  reviews?: Array<{
+    rating: number;
+    comment: string;
+    reviewerName: string;
+    date: Date;
+  }>;
+  meetupsHosted?: number;
+  meetupsJoined?: number;
+  lastActive?: string;
 }
 
 interface UserProfileModalProps {
   selectedUser: User | null;
   onClose: () => void;
+  onReport?: () => void;
 }
 
-const UserProfileModal: React.FC<UserProfileModalProps> = ({ selectedUser, onClose }) => {
+const UserProfileModal: React.FC<UserProfileModalProps> = ({ 
+  selectedUser, 
+  onClose,
+  onReport 
+}) => {
   if (!selectedUser) return null;
   
   return (

@@ -1,12 +1,19 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
-import { X, MapPin, Calendar, MessageCircle, Heart, Crown, Users, Shield, Clock } from 'lucide-react';
+import { X, MapPin, Calendar, MessageCircle, Heart, Crown, Users, Shield, Clock, ChevronDown, Flag, UserPlus, UserMinus, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import AnimatedTransition from './AnimatedTransition';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useToast } from '@/hooks/use-toast';
+import { 
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger
+} from '@/components/ui/collapsible';
+import { UserProfile as UserProfileType, PrivacyLevel } from '@/types/user';
 
 interface User {
   id: number;
@@ -17,7 +24,17 @@ interface User {
   active: boolean;
   premium: boolean;
   bio?: string;
-  privacy?: 'public' | 'hobby-only' | 'anonymous';
+  privacy?: PrivacyLevel;
+  joinDate?: Date;
+  reviews?: Array<{
+    rating: number;
+    comment: string;
+    reviewerName: string;
+    date: Date;
+  }>;
+  meetupsHosted?: number;
+  meetupsJoined?: number;
+  lastActive?: string;
 }
 
 interface UserProfileProps {
@@ -28,6 +45,51 @@ interface UserProfileProps {
 
 const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) => {
   const { theme } = useTheme();
+  const { toast } = useToast();
+  const [isFollowing, setIsFollowing] = React.useState(false);
+  const [isBlocked, setIsBlocked] = React.useState(false);
+  
+  const handleConnect = () => {
+    toast({
+      title: "Connection request sent",
+      description: `You've sent a connection request to ${user.name}`,
+    });
+  };
+  
+  const handleSchedule = () => {
+    toast({
+      title: "Meetup scheduling",
+      description: "This feature will be available soon!",
+    });
+  };
+  
+  const handleFollow = () => {
+    setIsFollowing(!isFollowing);
+    toast({
+      title: isFollowing ? "Unfollowed" : "Following",
+      description: isFollowing ? 
+        `You've unfollowed ${user.name}` : 
+        `You're now following ${user.name}`,
+    });
+  };
+  
+  const handleBlock = () => {
+    setIsBlocked(!isBlocked);
+    toast({
+      title: isBlocked ? "Unblocked" : "Blocked",
+      description: isBlocked ? 
+        `You've unblocked ${user.name}` : 
+        `You've blocked ${user.name}`,
+    });
+  };
+  
+  const handleReport = () => {
+    toast({
+      title: "Report submitted",
+      description: "Thank you for helping keep our community safe.",
+      variant: "destructive",
+    });
+  };
   
   return (
     <Card className={cn(
@@ -100,6 +162,28 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
             </span>
           )}
         </div>
+        
+        {/* Follow/Connection Button */}
+        <div className="mt-3">
+          <Button 
+            variant={isFollowing ? "outline" : "default"}
+            size="sm"
+            onClick={handleFollow}
+            className="rounded-full"
+          >
+            {isFollowing ? (
+              <>
+                <UserMinus className="h-3.5 w-3.5 mr-1" />
+                Unfollow
+              </>
+            ) : (
+              <>
+                <UserPlus className="h-3.5 w-3.5 mr-1" />
+                Follow
+              </>
+            )}
+          </Button>
+        </div>
       </CardHeader>
       
       <CardContent className="pb-6">
@@ -133,17 +217,109 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
           
           <div>
             <h4 className={`text-sm font-medium mb-2.5 ${theme === 'dark' ? 'text-gray-300' : ''}`}>Activity</h4>
-            <div className={`flex items-center justify-between text-sm ${
+            <div className={`space-y-2 text-sm ${
               theme === 'dark' ? 'text-gray-400' : 'text-muted-foreground'
             }`}>
-              <div className="flex items-center">
-                <Users className="h-4 w-4 mr-2" />
-                <span>12 meetups joined</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  <span>{user.meetupsJoined || 12} meetups joined</span>
+                </div>
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span>{user.meetupsHosted || 3} meetups hosted</span>
+                </div>
               </div>
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-2" />
-                <span>5 days ago</span>
+                <span>Last active: {user.lastActive || "5 days ago"}</span>
               </div>
+            </div>
+          </div>
+          
+          {/* Reviews section */}
+          <Collapsible>
+            <div className="flex items-center justify-between">
+              <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : ''}`}>Reviews</h4>
+              <CollapsibleTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </CollapsibleTrigger>
+            </div>
+            
+            <CollapsibleContent>
+              <div className="mt-2 space-y-3">
+                {user.reviews && user.reviews.length > 0 ? (
+                  user.reviews.map((review, index) => (
+                    <div key={index} className="border-t pt-3 first:border-t-0 first:pt-0">
+                      <div className="flex items-center justify-between">
+                        <span className={`font-medium text-xs ${theme === 'dark' ? 'text-gray-300' : ''}`}>
+                          {review.reviewerName}
+                        </span>
+                        <div className="flex items-center">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star 
+                              key={i} 
+                              className={`h-3 w-3 ${
+                                i < review.rating 
+                                  ? 'text-yellow-400 fill-yellow-400' 
+                                  : theme === 'dark' ? 'text-gray-600' : 'text-gray-300'
+                              }`} 
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <p className={`text-xs mt-1 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-muted-foreground'
+                      }`}>
+                        {review.comment}
+                      </p>
+                      <span className={`text-[10px] block mt-1 ${
+                        theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        {new Date(review.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <p className={`text-xs ${
+                    theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                  }`}>
+                    No reviews yet.
+                  </p>
+                )}
+              </div>
+            </CollapsibleContent>
+          </Collapsible>
+          
+          {/* Report and Block options */}
+          <div className="pt-2 border-t">
+            <div className="flex justify-between">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`text-xs px-2 ${
+                  theme === 'dark' ? 'text-gray-400 hover:text-red-400' : 'text-muted-foreground hover:text-red-500'
+                }`}
+                onClick={handleReport}
+              >
+                <Flag className="h-3 w-3 mr-1" />
+                Report
+              </Button>
+              
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className={`text-xs px-2 ${
+                  isBlocked 
+                    ? theme === 'dark' ? 'text-red-400' : 'text-red-500' 
+                    : theme === 'dark' ? 'text-gray-400' : 'text-muted-foreground'
+                }`}
+                onClick={handleBlock}
+              >
+                {isBlocked ? "Unblock user" : "Block user"}
+              </Button>
             </div>
           </div>
         </div>
@@ -155,11 +331,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onClose, className }) =
         <Button 
           variant="outline" 
           className={`w-full ${theme === 'dark' ? 'border-gray-800 hover:bg-gray-800 text-gray-300' : ''}`}
+          onClick={handleSchedule}
         >
           <Calendar className="h-4 w-4 mr-2" />
           <span>Schedule</span>
         </Button>
-        <Button className="w-full">
+        <Button 
+          className="w-full"
+          onClick={handleConnect}
+        >
           <MessageCircle className="h-4 w-4 mr-2" />
           <span>Connect</span>
         </Button>

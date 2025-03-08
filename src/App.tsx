@@ -11,6 +11,7 @@ import Explore from "./pages/Explore";
 import Profile from "./pages/Profile";
 import Features from "./pages/Features";
 import NotFound from "./pages/NotFound";
+import NotificationCenter from "./components/notifications/NotificationCenter";
 
 const queryClient = new QueryClient();
 
